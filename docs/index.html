@@ -1,1 +1,993 @@
-<!-- Week 5 — React frontend goes here -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hermes — Budget Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0e0e;
+    --surface: #1a1a1a;
+    --border: #2e2e2e;
+    --accent: #b87333;
+    --accent-dim: #8a5520;
+    --danger: #ff5c5c;
+    --text: #f0f0f0;
+    --muted: #666;
+    --radius: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    padding: 24px 16px;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 32px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 16px;
+  }
+
+  header h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3rem;
+    letter-spacing: 2px;
+    color: var(--accent);
+  }
+
+  header span {
+    color: var(--muted);
+    font-size: 0.75rem;
+  }
+
+  .month-nav {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .month-nav button {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 14px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    transition: border-color 0.2s;
+  }
+
+  .month-nav button:hover { border-color: var(--accent); color: var(--accent); }
+
+  .month-label {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
+    letter-spacing: 1px;
+    min-width: 180px;
+    text-align: center;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+
+  .card h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.1rem;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-bottom: 16px;
+    text-transform: uppercase;
+  }
+
+  .balance-amount {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.8rem;
+    color: var(--accent);
+    letter-spacing: 1px;
+  }
+
+  .balance-amount.negative { color: var(--danger); }
+
+  .sub-stats {
+    display: flex;
+    gap: 24px;
+    margin-top: 8px;
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+
+  .sub-stats span b { color: var(--text); }
+
+  .progress-bar {
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    margin-top: 14px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 3px;
+    transition: width 0.4s ease;
+  }
+
+  .progress-fill.over { background: var(--danger); }
+
+  .input-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  input, select {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 9px 12px;
+    border-radius: var(--radius);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  input:focus, select:focus { border-color: var(--accent); }
+
+  input[type="number"] { width: 120px; }
+  input[type="text"] { flex: 1; min-width: 100px; }
+
+  select { min-width: 130px; }
+
+  button.primary {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    padding: 9px 18px;
+    border-radius: var(--radius);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1rem;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+
+  button.primary:hover { opacity: 0.85; }
+
+  button.danger {
+    background: transparent;
+    border: 1px solid var(--danger);
+    color: var(--danger);
+    padding: 4px 10px;
+    border-radius: var(--radius);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    cursor: pointer;
+  }
+
+  button.danger:hover { background: var(--danger); color: #fff; }
+
+  .tx-list {
+    max-height: 260px;
+    overflow-y: auto;
+    margin-top: 12px;
+  }
+
+  .tx-list::-webkit-scrollbar { width: 4px; }
+  .tx-list::-webkit-scrollbar-track { background: transparent; }
+  .tx-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .tx-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    gap: 8px;
+    animation: fadeIn 0.25s ease;
+  }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+
+  .tx-item:last-child { border-bottom: none; }
+
+  .tx-tag {
+    font-size: 0.65rem;
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: var(--border);
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .tx-name { flex: 1; font-size: 0.8rem; }
+  .tx-amount { font-size: 0.9rem; color: var(--danger); white-space: nowrap; }
+  .tx-amount.income { color: var(--accent); }
+
+  .cat-chart {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 8px;
+  }
+
+  .cat-row { font-size: 0.75rem; }
+  .cat-label { display: flex; justify-content: space-between; margin-bottom: 4px; color: var(--muted); }
+  .cat-label b { color: var(--text); }
+  .cat-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .cat-fill { height: 100%; border-radius: 2px; transition: width 0.4s ease; }
+
+  .cat-colors { --c0:#b87333;--c1:#5cd0ff;--c2:#ffae42;--c3:#ff7eb3;--c4:#a78bfa;--c5:#34d399;--c6:#fb923c; }
+
+  /* Split Bill Section */
+  .split-section { grid-column: 1 / -1; }
+
+  .split-people {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 12px 0;
+    min-height: 32px;
+  }
+
+  .person-chip {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .person-chip button {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 0;
+    font-size: 0.8rem;
+    line-height: 1;
+  }
+
+  .person-chip button:hover { color: var(--danger); }
+
+  .split-result {
+    background: var(--bg);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-top: 12px;
+  }
+
+  .split-result h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1rem;
+    letter-spacing: 1px;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+
+  .split-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .split-item:last-child { border-bottom: none; }
+
+  .empty {
+    color: var(--muted);
+    font-size: 0.75rem;
+    text-align: center;
+    padding: 24px;
+  }
+
+  .label {
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* Hermes Alert Banner */
+  .hermes-alert {
+    grid-column: 1 / -1;
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    animation: slideDown 0.4s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .hermes-alert.warning {
+    background: #1e1000;
+    border: 1px solid #8a4a00;
+  }
+
+  .hermes-alert.success {
+    background: #0a1a0a;
+    border: 1px solid #2a6b2a;
+  }
+
+  .hermes-alert-text {
+    flex: 1;
+  }
+
+  .hermes-alert-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.1rem;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+
+  .hermes-alert.warning .hermes-alert-title { color: #e07b00; }
+  .hermes-alert.success .hermes-alert-title { color: #4caf50; }
+
+  .hermes-alert-msg {
+    font-size: 0.75rem;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  /* Fluttering Sandal */
+  .sandal-wrap {
+    position: relative;
+    width: 52px;
+    height: 52px;
+    flex-shrink: 0;
+  }
+
+  .sandal-svg {
+    width: 52px;
+    height: 52px;
+    animation: float 2s ease-in-out infinite;
+  }
+
+  .wing-left, .wing-right {
+    transform-origin: center bottom;
+  }
+
+  .wing-left { animation: flapLeft 0.45s ease-in-out infinite alternate; }
+  .wing-right { animation: flapRight 0.45s ease-in-out infinite alternate; }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-6px); }
+  }
+
+  @keyframes flapLeft {
+    from { transform: rotate(-20deg) scaleY(0.8); }
+    to   { transform: rotate(10deg) scaleY(1.1); }
+  }
+
+  @keyframes flapRight {
+    from { transform: rotate(20deg) scaleY(0.8); }
+    to   { transform: rotate(-10deg) scaleY(1.1); }
+  }
+
+  /* shimmer effect on success */
+  .hermes-alert.success::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 60%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(76,175,80,0.06), transparent);
+    animation: shimmer 2.5s infinite;
+  }
+
+  @keyframes shimmer {
+    0% { left: -100%; }
+    100% { left: 200%; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <svg width="48" height="56" viewBox="0 0 48 56" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;margin-right:4px">
+    <!-- Staff -->
+    <line x1="24" y1="4" x2="24" y2="54" stroke="#b87333" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- Wings left -->
+    <path d="M24 10 C18 6, 8 8, 6 14 C10 12, 16 13, 24 18" fill="#b87333" opacity="0.9"/>
+    <!-- Wings right -->
+    <path d="M24 10 C30 6, 40 8, 42 14 C38 12, 32 13, 24 18" fill="#b87333" opacity="0.9"/>
+    <!-- Top sphere -->
+    <circle cx="24" cy="6" r="3" fill="#b87333"/>
+    <!-- Snake 1 (left coil) -->
+    <path d="M24 20 C18 22, 14 26, 18 30 C22 34, 28 30, 24 34 C20 38, 14 38, 16 44 C18 48, 22 50, 24 52"
+          stroke="#b87333" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <!-- Snake 2 (right coil) -->
+    <path d="M24 20 C30 22, 34 26, 30 30 C26 34, 20 30, 24 34 C28 38, 34 38, 32 44 C30 48, 26 50, 24 52"
+          stroke="#8a5520" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <!-- Snake heads -->
+    <circle cx="16" cy="44" r="2.2" fill="#b87333"/>
+    <circle cx="32" cy="44" r="2.2" fill="#8a5520"/>
+  </svg>
+  <div>
+    <h1>HERMES</h1>
+    <span>monthly budget tracker</span>
+  </div>
+</header>
+
+<div class="month-nav">
+  <button onclick="changeMonth(-1)">◀ PREV</button>
+  <div class="month-label" id="monthLabel"></div>
+  <button onclick="changeMonth(1)">NEXT ▶</button>
+  <select id="currencySelect" onchange="setCurrency(this.value)" style="margin-left:auto;min-width:110px">
+    <option value="£">£ GBP</option>
+    <option value="$">$ USD</option>
+    <option value="€">€ EUR</option>
+    <option value="¥">¥ JPY</option>
+    <option value="₹">₹ INR</option>
+    <option value="A$">A$ AUD</option>
+    <option value="C$">C$ CAD</option>
+    <option value="Fr">Fr CHF</option>
+    <option value="kr">kr SEK</option>
+    <option value="₩">₩ KRW</option>
+    <option value="R">R ZAR</option>
+    <option value="د.إ">د.إ AED</option>
+  </select>
+</div>
+
+<div class="grid cat-colors">
+
+  <!-- Hermes Alert Banner -->
+  <div id="hermesAlert" style="display:none;grid-column:1/-1"></div>
+
+  <!-- Balance Overview -->
+  <div class="card">
+    <h2>Balance</h2>
+    <div class="balance-amount" id="balanceDisplay">£0.00</div>
+    <div class="sub-stats">
+      <span>IN <b id="totalIncome">£0.00</b></span>
+      <span>OUT <b id="totalSpent">£0.00</b></span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="spendProgress" style="width:0%"></div>
+    </div>
+  </div>
+
+  <!-- Add Earnings -->
+  <div class="card">
+    <h2>Add Income</h2>
+    <div class="label">Description</div>
+    <div class="input-row" style="margin-bottom:8px">
+      <input type="text" id="incomeDesc" placeholder="e.g. Monthly salary" style="flex:1">
+    </div>
+    <div class="label">Amount</div>
+    <div class="input-row">
+      <input type="number" id="incomeAmount" placeholder="0.00" min="0" step="0.01">
+      <button class="primary" onclick="addIncome()">ADD</button>
+    </div>
+  </div>
+
+  <!-- Add Expense -->
+  <div class="card">
+    <h2>Add Expense</h2>
+    <div class="input-row" style="margin-bottom:8px">
+      <input type="text" id="expenseName" placeholder="Description" style="flex:1">
+      <select id="expenseCat">
+        <option value="bills">🏠 Bills</option>
+        <option value="food">🍔 Food</option>
+        <option value="eating out">🍽️ Eating Out</option>
+        <option value="transport">🚗 Transport</option>
+        <option value="entertainment">🎮 Entertainment</option>
+        <option value="health">💊 Health</option>
+        <option value="other">📦 Other</option>
+      </select>
+    </div>
+    <div class="input-row">
+      <input type="number" id="expenseAmount" placeholder="0.00" min="0" step="0.01">
+      <button class="primary" onclick="addExpense()">ADD</button>
+    </div>
+  </div>
+
+  <!-- Category Breakdown -->
+  <div class="card">
+    <h2>By Category</h2>
+    <div class="cat-chart" id="catChart">
+      <div class="empty">No expenses yet</div>
+    </div>
+  </div>
+
+  <!-- Transaction History (full width) -->
+  <div class="card" style="grid-column:1/-1">
+    <h2>Transactions — <span id="txMonthName" style="color:var(--accent)"></span></h2>
+    <div class="tx-list" id="txList">
+      <div class="empty">No transactions this month</div>
+    </div>
+  </div>
+
+  <!-- Trend Chart -->
+  <div class="card" style="grid-column:1/-1">
+    <h2>Spending & Earning Trends — <span id="trendLabel" style="color:var(--accent)"></span></h2>
+    <div style="position:relative;height:220px;margin-top:8px">
+      <canvas id="trendChart"></canvas>
+    </div>
+    <div style="display:flex;gap:24px;margin-top:12px;font-size:0.72rem;color:var(--muted)">
+      <span><span style="display:inline-block;width:12px;height:3px;background:#b87333;border-radius:2px;margin-right:6px;vertical-align:middle"></span>Income</span>
+      <span><span style="display:inline-block;width:12px;height:3px;background:#ff5c5c;border-radius:2px;margin-right:6px;vertical-align:middle"></span>Spending</span>
+      <span><span style="display:inline-block;width:12px;height:3px;background:#5cd0ff;border-radius:2px;margin-right:6px;vertical-align:middle"></span>Balance</span>
+    </div>
+  </div>
+
+  <!-- Split Bill -->
+  <div class="card split-section">
+    <h2>Split a Bill</h2>
+    <div class="input-row" style="margin-bottom:10px">
+      <input type="text" id="splitDesc" placeholder="Bill description" style="flex:1">
+      <input type="number" id="splitTotal" placeholder="Total amount" min="0" step="0.01">
+    </div>
+    <div class="label">Add people</div>
+    <div class="input-row">
+      <input type="text" id="personName" placeholder="Person's name" style="flex:1">
+      <button class="primary" onclick="addPerson()">+ ADD</button>
+    </div>
+    <div class="split-people" id="splitPeople"></div>
+    <div class="input-row">
+      <button class="primary" onclick="calculateSplit()" style="width:100%">CALCULATE SPLIT</button>
+    </div>
+    <div id="splitResult"></div>
+  </div>
+
+</div>
+
+<script>
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const CAT_ORDER = ['bills','food','eating out','transport','entertainment','health','other'];
+const CAT_COLORS = ['var(--c0)','var(--c1)','var(--c2)','var(--c3)','var(--c4)','var(--c5)','var(--c6)'];
+
+let now = new Date();
+let curYear = now.getFullYear();
+let curMonth = now.getMonth();
+let splitPeople = [];
+
+// DATA STORE
+function key(y,m) { return `cf_${y}_${m}`; }
+function getData(y,m) {
+  try {
+    return JSON.parse(localStorage.getItem(key(y,m)) || '{"transactions":[]}');
+  } catch(e) {
+    return { transactions: [] };
+  }
+}
+function saveData(y,m,data) {
+  try {
+    localStorage.setItem(key(y,m), JSON.stringify(data));
+  } catch(e) {
+    // storage unavailable in sandboxed environments
+  }
+}
+
+function changeMonth(dir) {
+  curMonth += dir;
+  if (curMonth > 11) { curMonth = 0; curYear++; }
+  if (curMonth < 0) { curMonth = 11; curYear--; }
+  render();
+}
+
+let currencySymbol = '£';
+
+function setCurrency(symbol) {
+  currencySymbol = symbol;
+  try { localStorage.setItem('hermes_currency', symbol); } catch(e) {}
+  render();
+}
+
+function fmt(n) {
+  return currencySymbol + Math.abs(n).toFixed(2);
+}
+
+function addIncome() {
+  const desc = document.getElementById('incomeDesc').value.trim();
+  const amt = parseFloat(document.getElementById('incomeAmount').value);
+  if (!desc || isNaN(amt) || amt <= 0) return alert('Please enter a description and valid amount.');
+  const data = getData(curYear, curMonth);
+  data.transactions.push({ type:'income', name: desc, amount: amt, date: new Date().toLocaleDateString() });
+  saveData(curYear, curMonth, data);
+  document.getElementById('incomeDesc').value = '';
+  document.getElementById('incomeAmount').value = '';
+  render();
+}
+
+function addExpense() {
+  const name = document.getElementById('expenseName').value.trim();
+  const cat = document.getElementById('expenseCat').value;
+  const amt = parseFloat(document.getElementById('expenseAmount').value);
+  if (!name || isNaN(amt) || amt <= 0) return alert('Please enter a description and valid amount.');
+  const data = getData(curYear, curMonth);
+  data.transactions.push({ type:'expense', name, cat, amount: amt, date: new Date().toLocaleDateString() });
+  saveData(curYear, curMonth, data);
+  document.getElementById('expenseName').value = '';
+  document.getElementById('expenseAmount').value = '';
+  render();
+}
+
+function deleteTransaction(idx) {
+  const data = getData(curYear, curMonth);
+  data.transactions.splice(idx, 1);
+  saveData(curYear, curMonth, data);
+  render();
+}
+
+function addPerson() {
+  const name = document.getElementById('personName').value.trim();
+  if (!name) return;
+  splitPeople.push(name);
+  document.getElementById('personName').value = '';
+  renderPeople();
+}
+
+function removePerson(i) {
+  splitPeople.splice(i, 1);
+  renderPeople();
+}
+
+function renderPeople() {
+  const el = document.getElementById('splitPeople');
+  if (!splitPeople.length) { el.innerHTML = ''; return; }
+  el.innerHTML = splitPeople.map((p,i) =>
+    `<div class="person-chip">${p}<button onclick="removePerson(${i})">✕</button></div>`
+  ).join('');
+}
+
+function calculateSplit() {
+  const desc = document.getElementById('splitDesc').value.trim();
+  const total = parseFloat(document.getElementById('splitTotal').value);
+  if (!desc || isNaN(total) || total <= 0) return alert('Enter a bill description and amount.');
+  if (splitPeople.length === 0) return alert('Add at least one person to split with.');
+  const allPeople = ['You', ...splitPeople];
+  const each = total / allPeople.length;
+  const res = document.getElementById('splitResult');
+  res.innerHTML = `<div class="split-result">
+    <h3>${desc} — Total: ${fmt(total)}</h3>
+    ${allPeople.map(p => `<div class="split-item"><span>${p}</span><span style="color:var(--accent)">${fmt(each)}</span></div>`).join('')}
+  </div>`;
+
+  // Ask if user wants to add their share as expense
+  if (confirm(`Add your share (${fmt(each)}) as a "Bills" expense?`)) {
+    const data = getData(curYear, curMonth);
+    data.transactions.push({ type:'expense', name: `Split: ${desc}`, cat:'bills', amount: each, date: new Date().toLocaleDateString() });
+    saveData(curYear, curMonth, data);
+    render();
+  }
+}
+
+function render() {
+  const data = getData(curYear, curMonth);
+  const txs = data.transactions;
+
+  document.getElementById('monthLabel').textContent = `${MONTHS[curMonth]} ${curYear}`;
+  document.getElementById('txMonthName').textContent = MONTHS[curMonth];
+
+  let income = 0, spent = 0;
+  txs.forEach(t => {
+    if (t.type === 'income') income += t.amount;
+    else spent += t.amount;
+  });
+
+  const balance = income - spent;
+  const balEl = document.getElementById('balanceDisplay');
+  balEl.textContent = (balance < 0 ? '-' : '') + fmt(balance);
+  balEl.className = 'balance-amount' + (balance < 0 ? ' negative' : '');
+  document.getElementById('totalIncome').textContent = fmt(income);
+  document.getElementById('totalSpent').textContent = fmt(spent);
+
+  const pct = income > 0 ? Math.min((spent / income) * 100, 100) : 0;
+  const prog = document.getElementById('spendProgress');
+  prog.style.width = pct + '%';
+  prog.className = 'progress-fill' + (spent > income ? ' over' : '');
+
+  // Transactions list
+  const txList = document.getElementById('txList');
+  if (!txs.length) {
+    txList.innerHTML = '<div class="empty">No transactions this month</div>';
+  } else {
+    txList.innerHTML = [...txs].reverse().map((t, ri) => {
+      const i = txs.length - 1 - ri;
+      const tag = t.type === 'income' ? 'income' : t.cat;
+      return `<div class="tx-item">
+        <span class="tx-tag">${tag}</span>
+        <span class="tx-name">${t.name}</span>
+        <span style="color:var(--muted);font-size:0.7rem">${t.date}</span>
+        <span class="tx-amount ${t.type === 'income' ? 'income' : ''}">
+          ${t.type === 'income' ? '+' : '-'}${fmt(t.amount)}
+        </span>
+        <button class="danger" onclick="deleteTransaction(${i})">DEL</button>
+      </div>`;
+    }).join('');
+  }
+
+  // Hermes Alert
+  renderHermesAlert(balance);
+
+  // Trend Chart
+  renderTrendChart();
+
+  // Category chart
+  const catTotals = {};
+  txs.filter(t => t.type === 'expense').forEach(t => {
+    catTotals[t.cat] = (catTotals[t.cat] || 0) + t.amount;
+  });
+  const catEl = document.getElementById('catChart');
+  const catMaxVal = Math.max(...Object.values(catTotals), 1);
+  const cats = CAT_ORDER.filter(c => catTotals[c]);
+  if (!cats.length) {
+    catEl.innerHTML = '<div class="empty">No expenses yet</div>';
+  } else {
+    catEl.innerHTML = cats.map((c, i) => {
+      const pct = (catTotals[c] / catMaxVal * 100).toFixed(1);
+      const color = CAT_COLORS[CAT_ORDER.indexOf(c)];
+      return `<div class="cat-row">
+        <div class="cat-label"><span>${c}</span><b>${fmt(catTotals[c])}</b></div>
+        <div class="cat-bar"><div class="cat-fill" style="width:${pct}%;background:${color}"></div></div>
+      </div>`;
+    }).join('');
+  }
+}
+
+function renderTrendChart() {
+  const canvas = document.getElementById('trendChart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const rect = canvas.parentElement.getBoundingClientRect();
+  if (!rect.width || !rect.height) return;
+
+  // Gather last 6 months of data
+  const labels = [];
+  const incomeData = [];
+  const spendData = [];
+  const balanceData = [];
+
+  for (let i = 5; i >= 0; i--) {
+    let m = curMonth - i;
+    let y = curYear;
+    if (m < 0) { m += 12; y -= 1; }
+    labels.push(MONTHS[m].slice(0, 3));
+    const d = getData(y, m);
+    let inc = 0, sp = 0;
+    d.transactions.forEach(t => {
+      if (t.type === 'income') inc += t.amount;
+      else sp += t.amount;
+    });
+    incomeData.push(inc);
+    spendData.push(sp);
+    balanceData.push(inc - sp);
+  }
+
+  // Size canvas
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  canvas.style.width = rect.width + 'px';
+  canvas.style.height = rect.height + 'px';
+  ctx.scale(dpr, dpr);
+
+  const W = rect.width;
+  const H = rect.height;
+  const PAD = { top: 16, right: 20, bottom: 32, left: 56 };
+  const chartW = W - PAD.left - PAD.right;
+  const chartH = H - PAD.top - PAD.bottom;
+
+  ctx.clearRect(0, 0, W, H);
+
+  // Find scale
+  const allVals = [...incomeData, ...spendData, ...balanceData];
+  const minVal = Math.min(...allVals, 0);
+  const maxVal = Math.max(...allVals, 1);
+  const range = maxVal - minVal || 1;
+
+  const toX = i => PAD.left + (i / (labels.length - 1)) * chartW;
+  const toY = v => PAD.top + chartH - ((v - minVal) / range) * chartH;
+
+  // Grid lines
+  ctx.strokeStyle = '#2e2e2e';
+  ctx.lineWidth = 1;
+  for (let g = 0; g <= 4; g++) {
+    const y = PAD.top + (g / 4) * chartH;
+    ctx.beginPath();
+    ctx.moveTo(PAD.left, y);
+    ctx.lineTo(PAD.left + chartW, y);
+    ctx.stroke();
+    // Y-axis labels
+    const val = maxVal - (g / 4) * range;
+    ctx.fillStyle = '#555';
+    ctx.font = `10px 'DM Mono', monospace`;
+    ctx.textAlign = 'right';
+    ctx.fillText('£' + Math.round(val), PAD.left - 6, y + 4);
+  }
+
+  // Zero line
+  if (minVal < 0) {
+    const zy = toY(0);
+    ctx.strokeStyle = '#444';
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(PAD.left, zy);
+    ctx.lineTo(PAD.left + chartW, zy);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // Draw a line with gradient fill
+  function drawLine(data, color, fillColor) {
+    if (data.every(v => v === 0)) return;
+
+    // Fill gradient
+    ctx.beginPath();
+    ctx.moveTo(toX(0), toY(data[0]));
+    for (let i = 1; i < data.length; i++) {
+      const xMid = (toX(i - 1) + toX(i)) / 2;
+      const yMid = (toY(data[i - 1]) + toY(data[i])) / 2;
+      ctx.quadraticCurveTo(toX(i - 1), toY(data[i - 1]), xMid, yMid);
+    }
+    ctx.lineTo(toX(data.length - 1), toY(data[data.length - 1]));
+    ctx.lineTo(toX(data.length - 1), toY(0));
+    ctx.lineTo(toX(0), toY(0));
+    ctx.closePath();
+    const grad = ctx.createLinearGradient(0, PAD.top, 0, PAD.top + chartH);
+    grad.addColorStop(0, fillColor);
+    grad.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // Line
+    ctx.beginPath();
+    ctx.moveTo(toX(0), toY(data[0]));
+    for (let i = 1; i < data.length; i++) {
+      const xMid = (toX(i - 1) + toX(i)) / 2;
+      const yMid = (toY(data[i - 1]) + toY(data[i])) / 2;
+      ctx.quadraticCurveTo(toX(i - 1), toY(data[i - 1]), xMid, yMid);
+    }
+    ctx.lineTo(toX(data.length - 1), toY(data[data.length - 1]));
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2.5;
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+
+    // Dots
+    data.forEach((v, i) => {
+      ctx.beginPath();
+      ctx.arc(toX(i), toY(v), 4, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.strokeStyle = '#0e0e0e';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    });
+  }
+
+  drawLine(balanceData, '#5cd0ff', 'rgba(92,208,255,0.08)');
+  drawLine(spendData,   '#ff5c5c', 'rgba(255,92,92,0.08)');
+  drawLine(incomeData,  '#b87333', 'rgba(184,115,51,0.12)');
+
+  // X-axis labels
+  ctx.fillStyle = '#555';
+  ctx.font = `10px 'DM Mono', monospace`;
+  ctx.textAlign = 'center';
+  labels.forEach((l, i) => {
+    ctx.fillStyle = i === labels.length - 1 ? '#b87333' : '#555';
+    ctx.fillText(l, toX(i), H - 8);
+  });
+
+  document.getElementById('trendLabel').textContent = `Last 6 Months`;
+}
+
+const SANDAL_SVG = `
+<svg class="sandal-svg" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <ellipse cx="26" cy="38" rx="18" ry="6" fill="#6b3a1f" stroke="#b87333" stroke-width="1.5"/>
+  <ellipse cx="26" cy="38" rx="14" ry="4" fill="#4a2810" opacity="0.6"/>
+  <path d="M12 36 Q26 28 40 36" stroke="#b87333" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <path d="M18 38 L26 30 L34 38" stroke="#8a5520" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="26" cy="30" r="2.5" fill="#b87333" stroke="#e8a050" stroke-width="1"/>
+  <g class="wing-left" style="transform-origin:16px 34px">
+    <path d="M16 34 C8 28, 4 20, 8 14 C10 18, 12 24, 16 34Z" fill="#b87333" opacity="0.9"/>
+    <path d="M16 34 C10 26, 7 18, 11 12 C12 16, 13 22, 16 34Z" fill="#e8a050" opacity="0.5"/>
+  </g>
+  <g class="wing-right" style="transform-origin:36px 34px">
+    <path d="M36 34 C44 28, 48 20, 44 14 C42 18, 40 24, 36 34Z" fill="#b87333" opacity="0.9"/>
+    <path d="M36 34 C42 26, 45 18, 41 12 C40 16, 39 22, 36 34Z" fill="#e8a050" opacity="0.5"/>
+  </g>
+</svg>`;
+
+const LOW_TIPS = [
+  "Even Hermes watched his coin purse. Cut eating out this week.",
+  "The gods of Olympus budgeted too. Try a no-spend day tomorrow.",
+  "Your wallet is lighter than Hermes' sandals. Pause non-essentials.",
+  "Mercury advises: cancel one subscription you forgot about.",
+  "Low funds detected. Cook at home — feasts are for payday."
+];
+
+const HIGH_MSGS = [
+  "Hermes smiles upon your treasury. Wealth flows through discipline!",
+  "Over £1000 saved — your coffers overflow. Consider investing the surplus.",
+  "The messenger god applauds your financial speed. Keep this momentum!",
+  "You've outpaced the average mortal. Hermes tips his winged hat to you.",
+  "A fortune worthy of Olympus. Well done — now protect it wisely."
+];
+
+function renderHermesAlert(balance) {
+  const el = document.getElementById('hermesAlert');
+  if (balance <= 100 && balance >= 0) {
+    const tip = LOW_TIPS[Math.floor(Math.random() * LOW_TIPS.length)];
+    el.style.display = 'block';
+    el.innerHTML = `<div class="hermes-alert warning">
+      <div class="sandal-wrap">${SANDAL_SVG}</div>
+      <div class="hermes-alert-text">
+        <div class="hermes-alert-title">⚠️ Hermes Warns You</div>
+        <div class="hermes-alert-msg">${tip}</div>
+      </div>
+    </div>`;
+  } else if (balance > 1000) {
+    const msg = HIGH_MSGS[Math.floor(Math.random() * HIGH_MSGS.length)];
+    el.style.display = 'block';
+    el.innerHTML = `<div class="hermes-alert success">
+      <div class="sandal-wrap">${SANDAL_SVG}</div>
+      <div class="hermes-alert-text">
+        <div class="hermes-alert-title">🏆 Hermes Congratulates You</div>
+        <div class="hermes-alert-msg">${msg}</div>
+      </div>
+    </div>`;
+  } else {
+    el.style.display = 'none';
+    el.innerHTML = '';
+  }
+}
+
+// Enter key shortcuts
+document.getElementById('incomeAmount').addEventListener('keydown', e => e.key === 'Enter' && addIncome());
+document.getElementById('expenseAmount').addEventListener('keydown', e => e.key === 'Enter' && addExpense());
+document.getElementById('personName').addEventListener('keydown', e => e.key === 'Enter' && addPerson());
+window.addEventListener('resize', () => renderTrendChart());
+
+// Load saved currency
+try {
+  const saved = localStorage.getItem('hermes_currency');
+  if (saved) {
+    currencySymbol = saved;
+    const sel = document.getElementById('currencySelect');
+    if (sel) sel.value = saved;
+  }
+} catch(e) {}
+
+render();
+</script>
+</body>
+</html>
